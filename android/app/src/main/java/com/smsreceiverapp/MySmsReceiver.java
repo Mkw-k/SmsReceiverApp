@@ -25,7 +25,12 @@ public class MySmsReceiver extends BroadcastReceiver {
                     Log.d("SMS_RECEIVER", "From: " + sender + " Msg: " + message);
 
                     // 🔽 여기 수정!
-                    SmsReceiverModule.sendSmsToJs(sender, message);
+                    // "입금"이라는 단어가 포함된 메시지만 처리
+                    if (message != null && message.contains("입금")) {
+                        SmsReceiverModule.sendSmsToJs(sender, message);
+                        SmsReceiverModule.sendSmsToServer(sender, message);
+                    }
+
                 }
             } catch (Exception e) {
                 Log.e("SMS_RECEIVER", "Exception: " + e.getMessage());
