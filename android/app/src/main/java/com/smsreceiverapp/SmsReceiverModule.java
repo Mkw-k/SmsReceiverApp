@@ -51,8 +51,9 @@ public class SmsReceiverModule extends ReactContextBaseJavaModule {
 
         RequestBody body = RequestBody.create(json, JSON);
 
+        //192.168.0.52
         Request request = new Request.Builder()
-                .url("http://192.168.0.4:8080/api/sms") // 여기에 서버 주소 입력
+                .url("http://192.168.0.4:8080/api/transactions/sms") // 여기에 서버 주소 입력
                 .post(body)
                 .build();
 
