@@ -26,7 +26,7 @@ public class MySmsReceiver extends BroadcastReceiver {
 
                     // 🔽 여기 수정!
                     // "입금"이라는 단어가 포함된 메시지만 처리
-                    if (message != null && message.contains("입금")) {
+                    if (message != null && (message.contains("NH카드") || message.contains("KB국민카드"))) {
                         SmsReceiverModule.sendSmsToJs(sender, message);
                         SmsReceiverModule.sendSmsToServer(sender, message);
                     }
