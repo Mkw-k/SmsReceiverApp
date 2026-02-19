@@ -1,97 +1,37 @@
-This is a new [**React Native**](https://reactnative.dev) project, bootstrapped using [`@react-native-community/cli`](https://github.com/react-native-community/cli).
+# SmsReceiverApp
 
-# Getting Started
+React Native 기반의 SMS 수신 및 소비 패턴 분석 앱입니다.
 
-> **Note**: Make sure you have completed the [Set Up Your Environment](https://reactnative.dev/docs/set-up-your-environment) guide before proceeding.
+## 주요 기능
+- **SMS 자동 수신**: `react-native-android-sms-listener`를 통해 카드 결제 및 은행 입출금 문자 자동 인식
+- **소비 분석**: 수신된 데이터를 바탕으로 월별 소비 현황 및 '멍청비용' 분석
+- **절약 추적**: 저번 달 대비 절약 금액 확인 및 팁 제공
 
-## Step 1: Start Metro
+## 기술 스택
+- **Framework**: React Native (0.80.0)
+- **Navigation**: React Navigation (Stack, Tabs)
+- **State Management**: React Hooks
+- **Backend**: Firebase (Auth, Firestore)
+- **Charts**: React Native Chart Kit
+- **Styling**: React Native StyleSheet (refer.jsx 스타일 반영)
 
-First, you will need to run **Metro**, the JavaScript build tool for React Native.
+## 페이지 구성
+1. **Loading/Splash**: 앱 시작 시 로고 및 초기화 세션
+2. **Login/Signup**: 사용자 인증 (Firebase 연동)
+3. **Main (Index)**: 자산 현황, 지갑 포인트, 요약 소비 현황
+4. **Detail Pages**:
+   - 소비 상세 내역 (최근 내역 및 월별 비교 그래프)
+   - 절약 내역 상세
+   - 멍청비용 상세 내역
+5. **My Page / Settings**: 사용자 프로필 및 앱 설정
 
-To start the Metro dev server, run the following command from the root of your React Native project:
+## 실행 방법
+안드로이드 에뮬레이터 또는 기기가 연결된 상태에서 다음 명령어를 실행하세요.
 
-```sh
-# Using npm
-npm start
-
-# OR using Yarn
-yarn start
+```bash
+npx react-native run-android
 ```
 
-## Step 2: Build and run your app
-
-With Metro running, open a new terminal window/pane from the root of your React Native project, and use one of the following commands to build and run your Android or iOS app:
-
-### Android
-
-```sh
-# Using npm
-npm run android
-
-# OR using Yarn
-yarn android
-```
-
-### iOS
-
-For iOS, remember to install CocoaPods dependencies (this only needs to be run on first clone or after updating native deps).
-
-The first time you create a new project, run the Ruby bundler to install CocoaPods itself:
-
-```sh
-bundle install
-```
-
-Then, and every time you update your native dependencies, run:
-
-```sh
-bundle exec pod install
-```
-
-For more information, please visit [CocoaPods Getting Started guide](https://guides.cocoapods.org/using/getting-started.html).
-
-```sh
-# Using npm
-npm run ios
-
-# OR using Yarn
-yarn ios
-```
-
-If everything is set up correctly, you should see your new app running in the Android Emulator, iOS Simulator, or your connected device.
-
-This is one way to run your app — you can also build it directly from Android Studio or Xcode.
-
-## Step 3: Modify your app
-
-Now that you have successfully run the app, let's make changes!
-
-Open `App.tsx` in your text editor of choice and make some changes. When you save, your app will automatically update and reflect these changes — this is powered by [Fast Refresh](https://reactnative.dev/docs/fast-refresh).
-
-When you want to forcefully reload, for example to reset the state of your app, you can perform a full reload:
-
-- **Android**: Press the <kbd>R</kbd> key twice or select **"Reload"** from the **Dev Menu**, accessed via <kbd>Ctrl</kbd> + <kbd>M</kbd> (Windows/Linux) or <kbd>Cmd ⌘</kbd> + <kbd>M</kbd> (macOS).
-- **iOS**: Press <kbd>R</kbd> in iOS Simulator.
-
-## Congratulations! :tada:
-
-You've successfully run and modified your React Native App. :partying_face:
-
-### Now what?
-
-- If you want to add this new React Native code to an existing application, check out the [Integration guide](https://reactnative.dev/docs/integration-with-existing-apps).
-- If you're curious to learn more about React Native, check out the [docs](https://reactnative.dev/docs/getting-started).
-
-# Troubleshooting
-
-If you're having issues getting the above steps to work, see the [Troubleshooting](https://reactnative.dev/docs/troubleshooting) page.
-
-# Learn More
-
-To learn more about React Native, take a look at the following resources:
-
-- [React Native Website](https://reactnative.dev) - learn more about React Native.
-- [Getting Started](https://reactnative.dev/docs/environment-setup) - an **overview** of React Native and how setup your environment.
-- [Learn the Basics](https://reactnative.dev/docs/getting-started) - a **guided tour** of the React Native **basics**.
-- [Blog](https://reactnative.dev/blog) - read the latest official React Native **Blog** posts.
-- [`@facebook/react-native`](https://github.com/facebook/react-native) - the Open Source; GitHub **repository** for React Native.
+## 개발 참고 사항
+- `@reference/refer.jsx`의 웹 기반 로직을 React Native 환경에 맞춰 컴포넌트 단위로 분리하여 구현되었습니다.
+- SMS 수신 권한(`RECEIVE_SMS`, `READ_SMS`)이 필요합니다.
