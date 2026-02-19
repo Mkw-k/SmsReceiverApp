@@ -17,6 +17,7 @@ import org.json.JSONException;
 
 public class SmsReceiverModule extends ReactContextBaseJavaModule {
     private static ReactApplicationContext reactContext;
+    private final API_HOST = "http://192.168.0.4:8080";
 
     public SmsReceiverModule(ReactApplicationContext context) {
         super(context);
@@ -62,7 +63,7 @@ public class SmsReceiverModule extends ReactContextBaseJavaModule {
         RequestBody body = RequestBody.create(jsonBody, JSON_MEDIA_TYPE);
 
         Request request = new Request.Builder()
-                .url("http://192.168.0.4:8080/api/transactions/sms")
+                .url(API_HOST + "/api/transactions/sms")
                 .post(body)
                 .build();
 
