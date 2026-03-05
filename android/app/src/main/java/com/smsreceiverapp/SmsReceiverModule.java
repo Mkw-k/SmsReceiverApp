@@ -17,7 +17,8 @@ import org.json.JSONException;
 
 public class SmsReceiverModule extends ReactContextBaseJavaModule {
     private static ReactApplicationContext reactContext;
-    private final String API_HOST = "http://192.168.0.4:8080";
+    // 🔽 업데이트된 서버 IP 주소
+    private static final String API_HOST = "http://183.102.48.104:8080";
 
     public SmsReceiverModule(ReactApplicationContext context) {
         super(context);
@@ -58,7 +59,7 @@ public class SmsReceiverModule extends ReactContextBaseJavaModule {
         }
 
         String jsonBody = jsonObject.toString();
-        // Log.d("SMS_DEBUG", "전송할 JSON: " + jsonBody); // 디버깅용 로그
+        Log.d("SMS_DEBUG", "전송할 JSON: " + jsonBody); // 디버깅용 로그
 
         RequestBody body = RequestBody.create(jsonBody, JSON_MEDIA_TYPE);
 

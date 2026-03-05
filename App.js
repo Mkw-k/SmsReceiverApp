@@ -5,7 +5,8 @@ import {
   Platform, 
   PermissionsAndroid, 
   TouchableOpacity, 
-  Text as RNText 
+  Text as RNText,
+  Alert
 } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
@@ -36,6 +37,11 @@ export default function App() {
       const eventEmitter = new NativeEventEmitter(SmsReceiver);
       const subscription = eventEmitter.addListener('SmsReceived', (event) => {
         console.log('SMS Received in App:', event);
+        Alert.alert(
+          'SMS 수신 알림',
+          `보낸 사람: ${event.sender}\n내용: ${event.message}`,
+          [{ text: '확인' }]
+        );
       });
 
       return () => subscription.remove();
