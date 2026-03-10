@@ -68,6 +68,8 @@ public class SmsReceiverModule extends ReactContextBaseJavaModule {
                 .post(body)
                 .build();
 
+        Log.d("SMS_DEBUG", "요청 URL: " + request.url());
+
         new Thread(() -> {
             try (Response response = client.newCall(request).execute()) {
                 if (response.isSuccessful()) {
@@ -77,6 +79,7 @@ public class SmsReceiverModule extends ReactContextBaseJavaModule {
                 }
             } catch (Exception e) {
                 Log.e("SMS_POST", "오류 발생", e);
+                Log.d("SMS_POST", "오류 메시지: " + e.getMessage());
             }
         }).start();
     }
