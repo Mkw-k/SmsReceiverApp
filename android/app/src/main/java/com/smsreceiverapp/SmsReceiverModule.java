@@ -17,8 +17,9 @@ import org.json.JSONException;
 
 public class SmsReceiverModule extends ReactContextBaseJavaModule {
     private static ReactApplicationContext reactContext;
-    // 🔽 업데이트된 서버 IP 주소
-    private static final String API_HOST = "http://183.102.48.104:8080";
+
+    private final String API_HOST = "https://www.save-time.kro.kr/sms-monitor";
+
 
     public SmsReceiverModule(ReactApplicationContext context) {
         super(context);
