@@ -1,13 +1,42 @@
-import React from 'react';
-import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, ScrollView, ActivityIndicator } from 'react-native';
+import { api } from '../utils/api';
 
 const StupidExpenseDetail = () => {
-  const expenses = [
-    { id: 1, name: '편의점 군것질', date: '2024.10.27', amount: '-2,100원' },
-    { id: 2, name: '배달비', date: '2024.10.26', amount: '-3,000원' },
-    { id: 3, name: '불필요한 구독료', date: '2024.10.25', amount: '-8,000원' },
-    { id: 4, name: '새벽 배송', date: '2024.10.24', amount: '-4,500원' },
-  ];
+  const [loading, setLoading] = useState(true);
+  const [expenses, setExpenses] = useState([]);
+  const [totalStupid, setTotalStupid] = useState(0);
+
+  useEffect(() => {
+    const fetchStupidData = async () => {
+      try {
+        const response = await api.get('/api/transactions?isStupid=true');
+        const content = response.data.content;
+        setExpenses(content);
+        
+        const sum = content.reduce((acc, curr) => acc + curr.amount, 0);
+        setTotalStupid(sum);
+      } catch (error) {
+        console.error('Fetch error:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchStupidData();
+  }, []);
+
+  const formatAmount = (amount) => {
+    return new Intl.NumberFormat('ko-KR').format(amount || 0) + '원';
+  };
+
+  if (loading) {
+    return (
+      <View style={[styles.container, { justifyContent: 'center' }]}>
+        <ActivityIndicator size="large" color="#f56565" />
+      </View>
+    );
+  }
 
   return (
     <ScrollView style={styles.container}>
@@ -15,22 +44,26 @@ const StupidExpenseDetail = () => {
       
       <View style={styles.card}>
         <Text style={styles.cardTitle}>최근 멍청비용 내역</Text>
-        {expenses.map(item => (
-          <View key={item.id} style={styles.expenseRow}>
-            <View style={styles.expenseInfo}>
-              <Text style={styles.expenseName}>{item.name}</Text>
-              <Text style={styles.expenseDate}>{item.date}</Text>
+        {expenses.length > 0 ? (
+          expenses.map(item => (
+            <View key={item.id} style={styles.expenseRow}>
+              <View style={styles.expenseInfo}>
+                <Text style={styles.expenseName}>{item.vendor}</Text>
+                <Text style={styles.expenseDate}>{new Date(item.transactionTime).toLocaleDateString()}</Text>
+              </View>
+              <Text style={styles.expenseAmount}>-{formatAmount(item.amount)}</Text>
             </View>
-            <Text style={styles.expenseAmount}>{item.amount}</Text>
-          </View>
-        ))}
+          ))
+        ) : (
+          <Text style={styles.emptyText}>멍청비용 내역이 없습니다. 아주 훌륭해요! 👍</Text>
+        )}
       </View>
 
       <View style={styles.card}>
-        <Text style={styles.cardTitle}>멍청비용 총합</Text>
+        <Text style={styles.cardTitle}>이번 달 멍청비용 총합</Text>
         <View style={styles.totalContainer}>
-          <Text style={styles.totalAmount}>17,600원</Text>
-          <Text style={styles.subText}>지금까지 누적된 멍청비용입니다.</Text>
+          <Text style={styles.totalAmount}>{formatAmount(totalStupid)}</Text>
+          <Text style={styles.subText}>이번 달에 아낄 수 있었던 금액입니다.</Text>
         </View>
       </View>
     </ScrollView>
@@ -50,6 +83,7 @@ const styles = StyleSheet.create({
   totalContainer: { alignItems: 'center', marginVertical: 10 },
   totalAmount: { fontSize: 36, fontWeight: '900', color: '#f56565' },
   subText: { color: '#a0aec0', marginTop: 8 },
+  emptyText: { color: '#a0aec0', textAlign: 'center', paddingVertical: 20 },
 });
 
 export default StupidExpenseDetail;
