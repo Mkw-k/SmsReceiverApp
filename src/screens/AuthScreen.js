@@ -9,6 +9,7 @@ import {
   Platform,
   ScrollView,
   Alert,
+  NativeModules,
 } from 'react-native';
 import { api, setToken } from '../utils/api';
 
@@ -41,7 +42,12 @@ const AuthScreen = ({ navigation }) => {
         console.log('[Login Success] Response:', JSON.stringify(response, null, 2));
         
         if (response.data && response.data.accessToken) {
-          setToken(response.data.accessToken);
+          const token = response.data.accessToken;
+          setToken(token);
+          // 네이티브 모듈에 토큰 저장 (SMS 수신 시 사용)
+          if (NativeModules.SmsReceiver && NativeModules.SmsReceiver.saveToken) {
+            NativeModules.SmsReceiver.saveToken(token);
+          }
           navigation.replace('Main');
         } else {
           console.warn('[Login Error] No accessToken found in response. Check data structure!');
