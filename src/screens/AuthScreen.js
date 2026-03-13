@@ -8,7 +8,9 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
+  Alert,
 } from 'react-native';
+import { api, setToken } from '../utils/api';
 
 const AuthScreen = ({ navigation }) => {
   const [isRegister, setIsRegister] = useState(false);
@@ -16,10 +18,40 @@ const AuthScreen = ({ navigation }) => {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
 
-  const handleAuth = () => {
-    // Firebase 연동 전 임시 로그인 처리
-    console.log(isRegister ? '회원가입 시도' : '로그인 시도');
-    navigation.replace('Main');
+  const handleAuth = async () => {
+    if (!username || !password) {
+      Alert.alert('알림', '아이디와 비밀번호를 입력해주세요.');
+      return;
+    }
+
+    if (isRegister && password !== confirmPassword) {
+      Alert.alert('알림', '비밀번호가 일치하지 않습니다.');
+      return;
+    }
+
+    try {
+      if (isRegister) {
+        // 회원가입
+        await api.post('/api/auth/register', { loginId: username, password });
+        Alert.alert('알림', '회원가입이 완료되었습니다. 로그인해주세요.');
+        setIsRegister(false);
+      } else {
+        // 로그인
+        const response = await api.post('/api/auth/login', { loginId: username, password });
+        console.log('[Login Success] Response:', JSON.stringify(response, null, 2));
+        
+        if (response.data && response.data.accessToken) {
+          setToken(response.data.accessToken);
+          navigation.replace('Main');
+        } else {
+          console.warn('[Login Error] No accessToken found in response. Check data structure!');
+          Alert.alert('알림', '로그인 응답 형식이 올바르지 않습니다.');
+        }
+      }
+    } catch (error) {
+      console.error('[Login Error] Catch block:', error);
+      Alert.alert('로그인 실패', error.message || '아이디 또는 비밀번호를 확인해주세요.');
+    }
   };
 
   return (

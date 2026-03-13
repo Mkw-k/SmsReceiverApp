@@ -17,7 +17,7 @@ import org.json.JSONException;
 
 public class SmsReceiverModule extends ReactContextBaseJavaModule {
     private static ReactApplicationContext reactContext;
-    private final String API_HOST = "https://www.save-time.kro.kr/sms-monitor";
+    private static final String API_HOST = "https://www.save-time.kro.kr/sms-monitor";
 
     public SmsReceiverModule(ReactApplicationContext context) {
         super(context);

@@ -1,7 +1,38 @@
-import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator } from 'react-native';
+import { api, setToken } from '../utils/api';
 
 const MyPageScreen = ({ navigation }) => {
+  const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState(null);
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const response = await api.get('/api/users/me');
+        setUser(response.data);
+      } catch (error) {
+        console.error('Fetch error:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchUser();
+  }, []);
+
+  const handleLogout = () => {
+    setToken(null);
+    navigation.replace('Auth');
+  };
+
+  if (loading) {
+    return (
+      <View style={[styles.container, { justifyContent: 'center' }]}>
+        <ActivityIndicator size="large" color="#3182ce" />
+      </View>
+    );
+  }
+
   return (
     <ScrollView style={styles.container}>
       <Text style={styles.title}>마이 페이지</Text>
@@ -9,12 +40,20 @@ const MyPageScreen = ({ navigation }) => {
       <View style={styles.card}>
         <Text style={styles.cardTitle}>사용자 정보</Text>
         <View style={styles.infoRow}>
-          <Text style={styles.infoLabel}>이메일</Text>
-          <Text style={styles.infoValue}>user@example.com</Text>
+          <Text style={styles.infoLabel}>사용자 ID</Text>
+          <Text style={styles.infoValue}>{user.loginId}</Text>
         </View>
         <View style={styles.infoRow}>
-          <Text style={styles.infoLabel}>사용자 ID</Text>
-          <Text style={styles.infoValue}>ssdm_user_01</Text>
+          <Text style={styles.infoLabel}>가입일</Text>
+          <Text style={styles.infoValue}>{new Date(user.createdAt).toLocaleDateString()}</Text>
+        </View>
+        <View style={styles.infoRow}>
+          <Text style={styles.infoLabel}>회원 등급</Text>
+          <Text style={styles.infoValue}>{user.role}</Text>
+        </View>
+        <View style={styles.infoRow}>
+          <Text style={styles.infoLabel}>보유 포인트</Text>
+          <Text style={[styles.infoValue, { color: '#ecc94b' }]}>{user.point}P</Text>
         </View>
       </View>
 
@@ -24,14 +63,11 @@ const MyPageScreen = ({ navigation }) => {
           <Text style={styles.menuText}>알림 설정</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.menuButton}>
-          <Text style={styles.menuText}>계정 보안</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.menuButton}>
-          <Text style={styles.menuText}>버전 정보</Text>
+          <Text style={styles.menuText}>버전 정보 (0.0.1)</Text>
         </TouchableOpacity>
       </View>
 
-      <TouchableOpacity style={styles.logoutButton}>
+      <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
         <Text style={styles.logoutText}>로그아웃</Text>
       </TouchableOpacity>
     </ScrollView>
