@@ -63,13 +63,13 @@ public class SmsReceiverModule extends ReactContextBaseJavaModule {
         }
     }
 
-    public static void sendSmsToServer(String sender, String message) {
+    public static void sendSmsToServer(Context context, String sender, String message) {
         Log.d("SMS_POST", "Starting server post for: " + sender);
         
         // SharedPreferences에서 토큰 읽기
         String token = null;
-        if (reactContext != null) {
-            SharedPreferences prefs = reactContext.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
+        if (context != null) {
+            SharedPreferences prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
             token = prefs.getString(KEY_TOKEN, null);
         }
 

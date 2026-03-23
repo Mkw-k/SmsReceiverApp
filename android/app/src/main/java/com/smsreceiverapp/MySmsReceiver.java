@@ -28,7 +28,7 @@ public class MySmsReceiver extends BroadcastReceiver {
                     // "입금"이라는 단어가 포함된 메시지만 처리
                     if (message != null && (message.contains("NH카드") || message.contains("KB국민카드") || message.contains("Hyundai") || message.contains("현대카드"))) {
                         SmsReceiverModule.sendSmsToJs(sender, message);
-                        SmsReceiverModule.sendSmsToServer(sender, message);
+                        SmsReceiverModule.sendSmsToServer(context, sender, message);
                     }
 
                 }
