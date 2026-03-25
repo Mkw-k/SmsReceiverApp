@@ -3,29 +3,30 @@ package com.smsreceiverapp;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.util.Log;
-import androidx.annotation.NonNull;
+
+import com.facebook.react.bridge.Arguments;
 import com.facebook.react.bridge.ReactApplicationContext;
 import com.facebook.react.bridge.ReactContextBaseJavaModule;
 import com.facebook.react.bridge.ReactMethod;
-import com.facebook.react.modules.core.DeviceEventManagerModule;
-import com.facebook.react.bridge.Arguments;
 import com.facebook.react.bridge.WritableMap;
+import com.facebook.react.modules.core.DeviceEventManagerModule;
+
+import org.json.JSONObject;
+import org.json.JSONException;
+
+import java.io.IOException;
+import java.util.concurrent.TimeUnit;
+
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
-import org.json.JSONObject;
-import org.json.JSONException;
 
 public class SmsReceiverModule extends ReactContextBaseJavaModule {
     private static ReactApplicationContext reactContext;
-
-    private static final String API_HOST = "https://www.save-time.kro.kr/sms-monitor";
-    private static final String PREFS_NAME = "SmsAppPrefs";
-    private static final String KEY_TOKEN = "auth_token";
-
-
+    private static final String API_HOST = "http://10.0.2.2:8080";
+    private static final String TAG = "SMS_MONITOR_LOG";
 
     public SmsReceiverModule(ReactApplicationContext context) {
         super(context);
@@ -37,71 +38,46 @@ public class SmsReceiverModule extends ReactContextBaseJavaModule {
         return "SmsReceiver";
     }
 
-    // JS에서 로그인 성공 시 호출하여 토큰을 저장
-    @ReactMethod
-    public void saveToken(String token) {
-        if (getReactApplicationContext() != null) {
-            SharedPreferences prefs = getReactApplicationContext().getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
-            prefs.edit().putString(KEY_TOKEN, token).apply();
-            Log.d("SMS_AUTH", "Token saved successfully");
-        }
-    }
-
+    // JS로 이벤트를 보내 화면에 알림을 띄우는 메서드 (수정됨)
     public static void sendSmsToJs(String sender, String message) {
         if (reactContext == null) {
-            Log.w("SMS_RECEIVER", "reactContext is null, skipping JS event");
+            Log.e(TAG, "reactContext is null, cannot emit event to JS");
+            return;
+        }
+        
+        WritableMap params = Arguments.createMap();
+        params.putString("sender", sender);
+        params.putString("message", message);
+
+        // RCTDeviceEventEmitter를 사용하여 이벤트 전송
+        reactContext
+            .getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class)
+            .emit("SmsReceived", params);
+    }
+
+    // 서버로 전송하는 메서드 (Context 포함된 호출부 대응)
+    public static void sendSmsToServer(Context context, String sender, String message) {
+        doSend(sender, message);
+    }
+
+    private static void doSend(String sender, String message) {
+        if (reactContext == null) {
+            Log.e(TAG, "ReactContext is null. Cannot send SMS to server.");
             return;
         }
 
-        try {
-            WritableMap map = Arguments.createMap();
-            map.putString("sender", sender);
-            map.putString("message", message);
-            Log.d("SMS_RECEIVER", "Sending SMS to JS: " + sender);
-            reactContext
-                    .getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class)
-                    .emit("SmsReceived", map);
-        } catch (Exception e) {
-            Log.e("SMS_RECEIVER", "Failed to send SMS to JS", e);
-        }
-    }
+        SharedPreferences prefs = reactContext.getSharedPreferences("SmsAppPrefs", Context.MODE_PRIVATE);
+        String token = prefs.getString("auth_token", null);
 
-    public static void sendSmsToServer(Context context, String sender, String message) {
-        Log.d("SMS_POST", "Starting server post for: " + sender);
-        
-        // SharedPreferences에서 토큰 읽기
-        String token = null;
-        if (context != null) {
-            SharedPreferences prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
-            token = prefs.getString(KEY_TOKEN, null);
-        }
+        Log.d(TAG, "================ SMS 전송 시작 ================");
+        Log.d(TAG, "[1] 수신된 SMS 정보 - 발신자: " + sender + ", 내용: " + message);
 
-        OkHttpClient client;
-        try {
-            final javax.net.ssl.TrustManager[] trustAllCerts = new javax.net.ssl.TrustManager[]{
-                new javax.net.ssl.X509TrustManager() {
-                    @Override
-                    public void checkClientTrusted(java.security.cert.X509Certificate[] chain, String authType) {}
-                    @Override
-                    public void checkServerTrusted(java.security.cert.X509Certificate[] chain, String authType) {}
-                    @Override
-                    public java.security.cert.X509Certificate[] getAcceptedIssuers() {
-                        return new java.security.cert.X509Certificate[]{};
-                    }
-                }
-            };
-            final javax.net.ssl.SSLContext sslContext = javax.net.ssl.SSLContext.getInstance("SSL");
-            sslContext.init(null, trustAllCerts, new java.security.SecureRandom());
-            client = new OkHttpClient.Builder()
-                .sslSocketFactory(sslContext.getSocketFactory(), (javax.net.ssl.X509TrustManager) trustAllCerts[0])
-                .hostnameVerifier((hostname, session) -> true)
+        OkHttpClient client = new OkHttpClient.Builder()
+                .connectTimeout(10, TimeUnit.SECONDS)
+                .writeTimeout(10, TimeUnit.SECONDS)
+                .readTimeout(10, TimeUnit.SECONDS)
                 .build();
-        } catch (Exception e) {
-            Log.e("SMS_POST", "Failed to create unsafe client", e);
-            client = new OkHttpClient();
-        }
 
-        final OkHttpClient finalClient = client;
         final MediaType JSON_MEDIA_TYPE = MediaType.get("application/json; charset=utf-8");
 
         JSONObject jsonObject = new JSONObject();
@@ -109,52 +85,43 @@ public class SmsReceiverModule extends ReactContextBaseJavaModule {
             jsonObject.put("sender", sender);
             jsonObject.put("message", message);
         } catch (JSONException e) {
-            Log.e("SMS_JSON", "JSON 생성 실패", e);
+            Log.e(TAG, "JSON 생성 에러", e);
             return;
         }
 
-<<<<<<< HEAD
         String jsonBody = jsonObject.toString();
-        Log.d("SMS_DEBUG", "전송할 JSON: " + jsonBody); // 디버깅용 로그
+        Log.d(TAG, "[2] 전송 Payload (JSON): " + jsonBody);
 
-=======
-        final String jsonBody = jsonObject.toString();
->>>>>>> 7e60489f9f0350b385a991aeafb0e2eaab61cade
         RequestBody body = RequestBody.create(jsonBody, JSON_MEDIA_TYPE);
-
         Request.Builder requestBuilder = new Request.Builder()
                 .url(API_HOST + "/api/transactions/sms")
                 .post(body);
 
-        // 헤더에 토큰 추가
         if (token != null) {
-            Log.d("SMS_POST", "Adding Authorization header");
+            Log.d(TAG, "[3] 전송 Header (Token): Bearer " + token);
             requestBuilder.addHeader("Authorization", "Bearer " + token);
         } else {
-            Log.w("SMS_POST", "No token found! Server might reject this request.");
+            Log.w(TAG, "[3] 전송 Header: 토큰 없음");
         }
 
         final Request request = requestBuilder.build();
 
-        Log.d("SMS_DEBUG", "요청 URL: " + request.url());
-
         new Thread(() -> {
             try {
-                Log.d("SMS_POST", "Executing call to: " + API_HOST + "/api/transactions/sms");
-                try (Response response = finalClient.newCall(request).execute()) {
+                try (Response response = client.newCall(request).execute()) {
+                    String responseBody = response.body() != null ? response.body().string() : "null";
+                    Log.d(TAG, "---------------- 서버 응답 ----------------");
+                    Log.d(TAG, "Status Code: " + response.code());
+                    Log.d(TAG, "Response Body: " + responseBody);
                     if (response.isSuccessful()) {
-                        Log.d("SMS_POST", "Server Success: " + (response.body() != null ? response.body().string() : "empty"));
+                        Log.i(TAG, "결과: 전송 성공 ✅");
                     } else {
-                        Log.e("SMS_POST", "Server Failed: Code=" + response.code() + ", Msg=" + response.message());
+                        Log.e(TAG, "결과: 전송 실패 ❌ (에러 코드: " + response.code() + ")");
                     }
+                    Log.d(TAG, "==========================================");
                 }
-            } catch (Exception e) {
-<<<<<<< HEAD
-                Log.e("SMS_POST", "오류 발생", e);
-                Log.d("SMS_POST", "오류 메시지: " + e.getMessage());
-=======
-                Log.e("SMS_POST", "Server Connection Error", e);
->>>>>>> 7e60489f9f0350b385a991aeafb0e2eaab61cade
+            } catch (IOException e) {
+                Log.e(TAG, "네트워크 오류 발생", e);
             }
         }).start();
     }
