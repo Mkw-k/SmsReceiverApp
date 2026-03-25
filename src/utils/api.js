@@ -1,7 +1,7 @@
 import { Alert } from 'react-native';
 
-// const BASE_URL = "https://www.save-time.kro.kr/sms-monitor"; // 운영 서버 주소
-const BASE_URL = "http://10.0.2.2:8080"; // 로컬 서버 주소
+const BASE_URL = "https://www.save-time.kro.kr/sms-monitor"; // 운영 서버 주소
+// const BASE_URL = "http://10.0.2.2:8080"; // 로컬 서버 주소
 
 let accessToken = null;
 
