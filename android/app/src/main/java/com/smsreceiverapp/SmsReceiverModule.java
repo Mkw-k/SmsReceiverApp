@@ -38,6 +38,15 @@ public class SmsReceiverModule extends ReactContextBaseJavaModule {
         return "SmsReceiver";
     }
 
+    // JS에서 토큰을 넘겨받아 저장하는 메서드
+    @ReactMethod
+    public void saveToken(String token) {
+        if (reactContext == null) return;
+        SharedPreferences prefs = reactContext.getSharedPreferences("SmsAppPrefs", Context.MODE_PRIVATE);
+        prefs.edit().putString("auth_token", token).apply();
+        Log.d(TAG, "Token saved to SharedPreferences: " + token);
+    }
+
     // JS로 이벤트를 보내 화면에 알림을 띄우는 메서드 (수정됨)
     public static void sendSmsToJs(String sender, String message) {
         if (reactContext == null) {

@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { api } from './src/utils/api';
 
 // Screens
 import SplashScreen from './src/screens/SplashScreen';
@@ -35,8 +36,20 @@ export default function App() {
       }
 
       const eventEmitter = new NativeEventEmitter(SmsReceiver);
-      const subscription = eventEmitter.addListener('SmsReceived', (event) => {
+      const subscription = eventEmitter.addListener('SmsReceived', async (event) => {
         console.log('SMS Received in App:', event);
+        
+        try {
+          // 서버로 SMS 정보 전송
+          await api.post('/api/transactions/sms', {
+            sender: event.sender,
+            message: event.message
+          });
+          console.log('SMS data sent to server successfully');
+        } catch (error) {
+          console.error('Failed to send SMS to server:', error);
+        }
+
         Alert.alert(
           'SMS 수신 알림',
           `보낸 사람: ${event.sender}\n내용: ${event.message}`,
