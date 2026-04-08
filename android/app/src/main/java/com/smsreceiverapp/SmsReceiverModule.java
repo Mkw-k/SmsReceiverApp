@@ -20,7 +20,8 @@ import org.json.JSONException;
 
 public class SmsReceiverModule extends ReactContextBaseJavaModule {
     private static ReactApplicationContext reactContext;
-    private static final String API_HOST = "https://www.save-time.kro.kr/sms-monitor";
+//    private static final String API_HOST = "https://www.save-time.kro.kr/sms-monitor";
+    private static final String API_HOST = "http://10.0.2.2:8080";
     private static final String PREFS_NAME = "SmsAppPrefs";
     private static final String KEY_TOKEN = "auth_token";
 

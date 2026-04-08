@@ -9,8 +9,10 @@ import {
 } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { loadToken } from './src/utils/api';
 
 // Screens
+// ... (rest of imports unchanged)
 import SplashScreen from './src/screens/SplashScreen';
 import AuthScreen from './src/screens/AuthScreen';
 import MainScreen from './src/screens/MainScreen';
@@ -41,13 +43,19 @@ export default function App() {
       return () => subscription.remove();
     };
 
-    setupSmsListener();
+    const initialize = async () => {
+      await setupSmsListener();
+      
+      // 토큰 로드 및 로그인 상태 확인
+      const token = await loadToken();
+      if (token) {
+        setIsLoggedIn(true);
+      }
 
-    const timer = setTimeout(() => {
       setIsReady(true);
-    }, 3000);
+    };
 
-    return () => clearTimeout(timer);
+    initialize();
   }, []);
 
   if (!isReady) {

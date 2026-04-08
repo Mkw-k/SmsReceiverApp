@@ -20,8 +20,8 @@ const MyPageScreen = ({ navigation }) => {
     fetchUser();
   }, []);
 
-  const handleLogout = () => {
-    setToken(null);
+  const handleLogout = async () => {
+    await setToken(null);
     navigation.replace('Auth');
   };
 

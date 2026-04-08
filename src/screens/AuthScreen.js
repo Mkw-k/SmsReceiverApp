@@ -43,7 +43,7 @@ const AuthScreen = ({ navigation }) => {
         
         if (response.data && response.data.accessToken) {
           const token = response.data.accessToken;
-          setToken(token);
+          await setToken(token);
           // 네이티브 모듈에 토큰 저장 (SMS 수신 시 사용)
           if (NativeModules.SmsReceiver && NativeModules.SmsReceiver.saveToken) {
             NativeModules.SmsReceiver.saveToken(token);

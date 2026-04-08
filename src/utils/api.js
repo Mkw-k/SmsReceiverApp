@@ -1,16 +1,43 @@
 import { Alert } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const BASE_URL = 'https://www.save-time.kro.kr/sms-monitor'; // 운영 서버 주소
+//const BASE_URL = 'https://www.save-time.kro.kr/sms-monitor'; // 운영 서버 주소
+const BASE_URL = 'http://10.0.2.2:8080'; // 운영 서버 주소
 
 let accessToken = null;
 
-export const setToken = (token) => {
+export const setToken = async (token) => {
   accessToken = token;
+  try {
+    if (token) {
+      await AsyncStorage.setItem('userToken', token);
+    } else {
+      await AsyncStorage.removeItem('userToken');
+    }
+  } catch (error) {
+    console.error('Error saving token:', error);
+  }
+};
+
+export const loadToken = async () => {
+  try {
+    const token = await AsyncStorage.getItem('userToken');
+    accessToken = token;
+    return token;
+  } catch (error) {
+    console.error('Error loading token:', error);
+    return null;
+  }
 };
 
 export const getToken = () => accessToken;
 
 const request = async (endpoint, options = {}) => {
+  // 토큰이 없으면 로드 시도
+  if (!accessToken) {
+    await loadToken();
+  }
+
   const url = `${BASE_URL}${endpoint}`;
   console.log(`[API Request] ${options.method || 'GET'} ${url}`);
   const headers = {
