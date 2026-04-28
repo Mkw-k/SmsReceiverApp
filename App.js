@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import messaging from '@react-native-firebase/messaging';
 import { api } from './src/utils/api';
 
 // Screens
@@ -33,7 +34,32 @@ export default function App() {
       if (Platform.OS === 'android') {
         await PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS.RECEIVE_SMS);
         await PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS.READ_SMS);
+        if (Platform.Version >= 33) {
+          await PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS);
+        }
       }
+
+      // Firebase FCM 설정
+      const requestUserPermission = async () => {
+        const authStatus = await messaging().requestPermission();
+        const enabled =
+          authStatus === messaging.AuthorizationStatus.AUTHORIZED ||
+          authStatus === messaging.AuthorizationStatus.PROVISIONAL;
+
+        if (enabled) {
+          console.log('Authorization status:', authStatus);
+          const token = await messaging().getToken();
+          console.log('FCM Token:', token);
+          // TODO: 이 토큰을 서버에 저장하는 API 호출 필요
+        }
+      };
+
+      await requestUserPermission();
+
+      // 포그라운드 메시지 처리
+      const unsubscribeMessaging = messaging().onMessage(async remoteMessage => {
+        Alert.alert('A new FCM message arrived!', JSON.stringify(remoteMessage));
+      });
 
       const eventEmitter = new NativeEventEmitter(SmsReceiver);
       const subscription = eventEmitter.addListener('SmsReceived', async (event) => {

@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "371467262087",
+    "project_id": "smsmonitorweb",
+    "storage_bucket": "smsmonitorweb.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:371467262087:android:d8c74cbbb1ba39de5b8022",
+        "android_client_info": {
+          "package_name": "com.smsreceiverapp"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBPDqw84uY1tVNr35BKIhWKpyiYfK8V10Q"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
