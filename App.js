@@ -50,7 +50,18 @@ export default function App() {
           console.log('Authorization status:', authStatus);
           const token = await messaging().getToken();
           console.log('FCM Token:', token);
-          // TODO: 이 토큰을 서버에 저장하는 API 호출 필요
+          
+          // 서버에 토큰 등록
+          try {
+            await api.post('/api/devices/register', {
+              token: token,
+              platform: Platform.OS,
+              loginId: 'mkw1' // 실제 운영시에는 유저 아이디 연동
+            });
+            console.log('Device token registered to server');
+          } catch (e) {
+            console.error('Failed to register device token:', e);
+          }
         }
       };
 
