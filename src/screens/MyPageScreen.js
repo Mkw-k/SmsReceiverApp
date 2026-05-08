@@ -64,6 +64,22 @@ const MyPageScreen = ({ navigation }) => {
     }
   };
 
+  const handleShowToken = async () => {
+    try {
+      const token = await messaging().getToken();
+      console.log('[Token Check] Current Token:', token);
+      Alert.alert(
+        'FCM 토큰 (복사용)',
+        token,
+        [
+          { text: '확인', style: 'cancel' }
+        ]
+      );
+    } catch (error) {
+      Alert.alert('오류', '토큰을 가져오지 못했습니다.');
+    }
+  };
+
   if (loading) {
     return (
       <View style={[styles.container, { justifyContent: 'center' }]}>
@@ -102,17 +118,26 @@ const MyPageScreen = ({ navigation }) => {
           <Text style={styles.menuText}>알림 설정</Text>
         </TouchableOpacity>
         
-        <TouchableOpacity 
-          style={[styles.menuButton, { backgroundColor: '#3182ce', borderRadius: 8, marginTop: 10, borderBottomWidth: 0, paddingVertical: 15 }]} 
-          onPress={handlePushTest}
-          disabled={pushLoading}
-        >
-          {pushLoading ? (
-            <ActivityIndicator color="#fff" />
-          ) : (
-            <Text style={[styles.menuText, { textAlign: 'center', fontWeight: 'bold' }]}>앱푸시 테스트 발송</Text>
-          )}
-        </TouchableOpacity>
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 10 }}>
+          <TouchableOpacity 
+            style={[styles.menuButton, { backgroundColor: '#3182ce', borderRadius: 8, borderBottomWidth: 0, paddingVertical: 12, flex: 1, marginRight: 5 }]} 
+            onPress={handlePushTest}
+            disabled={pushLoading}
+          >
+            {pushLoading ? (
+              <ActivityIndicator color="#fff" />
+            ) : (
+              <Text style={[styles.menuText, { textAlign: 'center', fontWeight: 'bold', fontSize: 13 }]}>푸시 테스트</Text>
+            )}
+          </TouchableOpacity>
+
+          <TouchableOpacity 
+            style={[styles.menuButton, { backgroundColor: '#4a5568', borderRadius: 8, borderBottomWidth: 0, paddingVertical: 12, flex: 1, marginLeft: 5 }]} 
+            onPress={handleShowToken}
+          >
+            <Text style={[styles.menuText, { textAlign: 'center', fontWeight: 'bold', fontSize: 13 }]}>토큰 확인</Text>
+          </TouchableOpacity>
+        </View>
 
         <TouchableOpacity style={styles.menuButton}>
           <Text style={styles.menuText}>버전 정보 (0.0.1)</Text>
