@@ -1,0 +1,11 @@
+{
+    "Simulator Target Bundle": "com.smsreceiverapp",
+    "aps": {
+        "alert": {
+            "title": "🍎 무료 계정 테스트 성공!",
+            "body": "이것은 시뮬레이터 전용 가상 푸시입니다. 실제 알림과 똑같이 작동합니다!"
+        },
+        "badge": 1,
+        "sound": "default"
+    }
+}

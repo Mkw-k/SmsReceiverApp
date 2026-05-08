@@ -1,6 +1,9 @@
-import { Alert } from 'react-native';
+import { Alert, Platform } from 'react-native';
 
-const BASE_URL = "http://10.0.2.2:8080"; // 로컬 서버 주소
+const BASE_URL = Platform.OS === 'android' 
+  ? "http://10.0.2.2:8080" 
+  : "http://localhost:8080";
+
 // const BASE_URL = "https://www.save-time.kro.kr/sms-monitor"; // 운영 서버 주소
 
 let accessToken = null;
@@ -25,10 +28,25 @@ const request = async (endpoint, options = {}) => {
 
   try {
     const response = await fetch(url, { ...options, headers });
-    const result = await response.json();
+    
+    // 응답 텍스트를 먼저 가져옴
+    const responseText = await response.text();
+    console.log(`[API Response] ${response.status} ${url} : ${responseText}`);
+
+    let result = {};
+    if (responseText) {
+      try {
+        // JSON 파싱 시도
+        result = JSON.parse(responseText);
+      } catch (e) {
+        // JSON이 아닌 일반 텍스트(예: "Registered")인 경우
+        console.log(`[API Response] Plain text received: ${responseText}`);
+        result = { message: responseText, isPlainText: true };
+      }
+    }
 
     if (!response.ok) {
-      throw new Error(result.message || '요청 처리 중 오류가 발생했습니다.');
+      throw new Error(result.message || `요청 처리 중 오류가 발생했습니다. (Status: ${response.status})`);
     }
     return result;
   } catch (error) {

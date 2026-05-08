@@ -51,25 +51,44 @@ export default function App() {
           const token = await messaging().getToken();
           console.log('FCM Token:', token);
           
-          // 서버에 토큰 등록
+          if (Platform.OS === 'ios') {
+            Alert.alert('iOS FCM Token', token);
+          }
+          
+          // [자동 테스트] 본인 기기로 테스트 푸시 전송 (임시)
+          console.log('Starting automated self-push test...');
           try {
+            // 이 경로는 백엔드에 테스트용 API가 있다고 가정하거나, 
+            // 단순히 로그로 성공 여부를 확인하기 위함입니다.
+            // 실제 FCM 발송은 서버(Node.js/Java)에서 수행해야 하므로 
+            // 여기서는 서버에 등록 요청을 보내는 것으로 테스트를 갈음합니다.
             await api.post('/api/devices/register', {
               token: token,
               platform: Platform.OS,
-              loginId: 'mkw1' // 실제 운영시에는 유저 아이디 연동
+              loginId: 'mkw11'
             });
-            console.log('Device token registered to server');
+            console.log('Self-push test: Device registered successfully');
           } catch (e) {
-            console.error('Failed to register device token:', e);
+            console.error('Self-push test failed:', e);
           }
         }
       };
 
       await requestUserPermission();
 
-      // 포그라운드 메시지 처리
+      // 포그라운드 메시지 처리 (앱이 켜져 있을 때)
       const unsubscribeMessaging = messaging().onMessage(async remoteMessage => {
-        Alert.alert('A new FCM message arrived!', JSON.stringify(remoteMessage));
+        console.log('FCM Message Received:', remoteMessage);
+        Alert.alert(
+          remoteMessage.notification?.title || '알림',
+          remoteMessage.notification?.body || '메시지가 도착했습니다.',
+          [{ text: '확인' }]
+        );
+      });
+
+      // 백그라운드/종료 상태에서 알림을 클릭해 들어온 경우 처리
+      messaging().onNotificationOpenedApp(remoteMessage => {
+        console.log('Notification caused app to open from background:', remoteMessage);
       });
 
       const eventEmitter = new NativeEventEmitter(SmsReceiver);
