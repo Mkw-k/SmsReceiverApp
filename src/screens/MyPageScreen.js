@@ -43,7 +43,7 @@ const MyPageScreen = ({ navigation }) => {
             try {
               // 2. 서버에 테스트 푸시 요청 (사용자 지정 엔드포인트)
               console.log('[Push Test] Calling test-push endpoint...');
-              const response = await api.post(`/api/transactions/test-push?token=${token}&title=iOS_Test_Push`, {});
+              const response = await api.post(`/api/transactions/test-push?token=${token}&title=푸시 테스트`, {});
 
               console.log('[Push Test] Server Response:', response);
               Alert.alert('성공', `테스트 푸시가 요청되었습니다.\n서버 응답: ${response.message || 'Success'}`);

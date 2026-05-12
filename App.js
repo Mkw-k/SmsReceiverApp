@@ -32,10 +32,24 @@ export default function App() {
   useEffect(() => {
     const setupSmsListener = async () => {
       if (Platform.OS === 'android') {
+        // 기존 SMS 권한 요청
         await PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS.RECEIVE_SMS);
         await PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS.READ_SMS);
         if (Platform.Version >= 33) {
           await PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS);
+        }
+
+        // [추가] 알림 읽기 서비스 권한 확인
+        const isEnabled = await SmsReceiver.isNotificationListenerEnabled();
+        if (!isEnabled) {
+          Alert.alert(
+            '권한 필요',
+            'RCS 및 카드 알림을 읽기 위해 "알림 접근 권한"이 필요합니다. 설정 화면에서 SmsReceiverApp을 허용해 주세요.',
+            [
+              { text: '나중에' },
+              { text: '설정하러 가기', onPress: () => SmsReceiver.openNotificationListenerSettings() }
+            ]
+          );
         }
       }
 
@@ -93,18 +107,10 @@ export default function App() {
 
       const eventEmitter = new NativeEventEmitter(SmsReceiver);
       const subscription = eventEmitter.addListener('SmsReceived', async (event) => {
-        console.log('SMS Received in App:', event);
+        console.log('SMS Received in App (UI Update):', event);
         
-        try {
-          // 서버로 SMS 정보 전송
-          await api.post('/api/transactions/sms', {
-            sender: event.sender,
-            message: event.message
-          });
-          console.log('SMS data sent to server successfully');
-        } catch (error) {
-          console.error('Failed to send SMS to server:', error);
-        }
+        // [수정] 서버 전송 로직은 이제 네이티브(Java)에서 직접 수행합니다.
+        // JS에서는 사용자 알림창만 띄워줍니다.
 
         Alert.alert(
           'SMS 수신 알림',
