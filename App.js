@@ -1,188 +1,107 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { 
-  NativeEventEmitter, 
-  NativeModules, 
   Platform, 
   PermissionsAndroid, 
-  TouchableOpacity, 
-  Text as RNText,
-  Alert
+  Alert,
+  SafeAreaView,
+  StyleSheet,
+  StatusBar,
+  BackHandler
 } from 'react-native';
-import { NavigationContainer } from '@react-navigation/native';
-import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { WebView } from 'react-native-webview';
 import messaging from '@react-native-firebase/messaging';
-import { api } from './src/utils/api';
-
-// Screens
 import SplashScreen from './src/screens/SplashScreen';
-import AuthScreen from './src/screens/AuthScreen';
-import MainScreen from './src/screens/MainScreen';
-import ConsumptionDetail from './src/screens/ConsumptionDetail';
-import SavingDetail from './src/screens/SavingDetail';
-import StupidExpenseDetail from './src/screens/StupidExpenseDetail';
-import MyPageScreen from './src/screens/MyPageScreen';
 
-const { SmsReceiver } = NativeModules;
-const Stack = createNativeStackNavigator();
+const WEB_URL = 'https://www.save-time.kro.kr/sms-monitor/'; // Update this to your web app URL
 
 export default function App() {
   const [isReady, setIsReady] = useState(false);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const webViewRef = useRef(null);
+  const [canGoBack, setCanGoBack] = useState(false);
 
   useEffect(() => {
-    const setupSmsListener = async () => {
+    const setup = async () => {
       if (Platform.OS === 'android') {
-        // 기존 SMS 권한 요청
         await PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS.RECEIVE_SMS);
         await PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS.READ_SMS);
         if (Platform.Version >= 33) {
           await PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS);
         }
-
-        // [추가] 알림 읽기 서비스 권한 확인
-        const isEnabled = await SmsReceiver.isNotificationListenerEnabled();
-        if (!isEnabled) {
-          Alert.alert(
-            '권한 필요',
-            'RCS 및 카드 알림을 읽기 위해 "알림 접근 권한"이 필요합니다. 설정 화면에서 SmsReceiverApp을 허용해 주세요.',
-            [
-              { text: '나중에' },
-              { text: '설정하러 가기', onPress: () => SmsReceiver.openNotificationListenerSettings() }
-            ]
-          );
-        }
       }
 
-      // Firebase FCM 설정
-      const requestUserPermission = async () => {
-        const authStatus = await messaging().requestPermission();
-        const enabled =
-          authStatus === messaging.AuthorizationStatus.AUTHORIZED ||
-          authStatus === messaging.AuthorizationStatus.PROVISIONAL;
+      // FCM setup
+      const token = await messaging().getToken();
+      console.log('FCM Token:', token);
+      
+      // We can pass this token to the WebView if needed
+      // webViewRef.current?.postMessage(JSON.stringify({ type: 'TOKEN', token }));
 
-        if (enabled) {
-          console.log('Authorization status:', authStatus);
-          const token = await messaging().getToken();
-          console.log('FCM Token:', token);
-          
-          if (Platform.OS === 'ios') {
-            Alert.alert('iOS FCM Token', token);
-          }
-          
-          // [자동 테스트] 본인 기기로 테스트 푸시 전송 (임시)
-          console.log('Starting automated self-push test...');
-          try {
-            // 이 경로는 백엔드에 테스트용 API가 있다고 가정하거나, 
-            // 단순히 로그로 성공 여부를 확인하기 위함입니다.
-            // 실제 FCM 발송은 서버(Node.js/Java)에서 수행해야 하므로 
-            // 여기서는 서버에 등록 요청을 보내는 것으로 테스트를 갈음합니다.
-            await api.post('/api/devices/register', {
-              token: token,
-              platform: Platform.OS,
-              loginId: 'mkw11'
-            });
-            console.log('Self-push test: Device registered successfully');
-          } catch (e) {
-            console.error('Self-push test failed:', e);
-          }
-        }
-      };
-
-      await requestUserPermission();
-
-      // 포그라운드 메시지 처리 (앱이 켜져 있을 때)
       const unsubscribeMessaging = messaging().onMessage(async remoteMessage => {
         console.log('FCM Message Received:', remoteMessage);
-        Alert.alert(
-          remoteMessage.notification?.title || '알림',
-          remoteMessage.notification?.body || '메시지가 도착했습니다.',
-          [{ text: '확인' }]
-        );
+        // We can pass the notification to the webview to show in-app notification
+        webViewRef.current?.postMessage(JSON.stringify({ 
+          type: 'NOTIFICATION', 
+          title: remoteMessage.notification?.title,
+          body: remoteMessage.notification?.body 
+        }));
       });
 
-      // 백그라운드/종료 상태에서 알림을 클릭해 들어온 경우 처리
-      messaging().onNotificationOpenedApp(remoteMessage => {
-        console.log('Notification caused app to open from background:', remoteMessage);
-      });
-
-      const eventEmitter = new NativeEventEmitter(SmsReceiver);
-      const subscription = eventEmitter.addListener('SmsReceived', async (event) => {
-        console.log('SMS Received in App (UI Update):', event);
-        
-        // [수정] 서버 전송 로직은 이제 네이티브(Java)에서 직접 수행합니다.
-        // JS에서는 사용자 알림창만 띄워줍니다.
-
-        Alert.alert(
-          'SMS 수신 알림',
-          `보낸 사람: ${event.sender}\n내용: ${event.message}`,
-          [{ text: '확인' }]
-        );
-      });
-
-      return () => subscription.remove();
+      return () => unsubscribeMessaging();
     };
 
-    setupSmsListener();
+    setup();
+
+    const backAction = () => {
+      if (canGoBack) {
+        webViewRef.current.goBack();
+        return true;
+      }
+      return false;
+    };
+
+    const backHandler = BackHandler.addEventListener('hardwareBackPress', backAction);
 
     const timer = setTimeout(() => {
       setIsReady(true);
-    }, 3000);
+    }, 2000);
 
-    return () => clearTimeout(timer);
-  }, []);
+    return () => {
+      clearTimeout(timer);
+      backHandler.remove();
+    };
+  }, [canGoBack]);
 
   if (!isReady) {
     return <SplashScreen />;
   }
 
   return (
-    <NavigationContainer>
-      <Stack.Navigator 
-        initialRouteName={isLoggedIn ? "Main" : "Auth"}
-        screenOptions={{
-          headerStyle: { backgroundColor: '#1a202c' },
-          headerTintColor: '#fff',
-          headerTitleStyle: { fontWeight: 'bold' },
+    <SafeAreaView style={styles.container}>
+      <StatusBar barStyle="dark-content" backgroundColor="#ffffff" />
+      <WebView
+        ref={webViewRef}
+        source={{ uri: WEB_URL }}
+        style={styles.webview}
+        onNavigationStateChange={(navState) => setCanGoBack(navState.canGoBack)}
+        javaScriptEnabled={true}
+        domStorageEnabled={true}
+        startInLoadingState={true}
+        onMessage={(event) => {
+          // Handle messages from WebView to Native if needed
+          const data = JSON.parse(event.nativeEvent.data);
+          console.log('Message from WebView:', data);
         }}
-      >
-        <Stack.Screen 
-          name="Auth" 
-          component={AuthScreen} 
-          options={{ headerShown: false }} 
-        />
-        <Stack.Screen 
-          name="Main" 
-          component={MainScreen} 
-          options={({ navigation }) => ({ 
-            title: 'SSDMA',
-            headerRight: () => (
-              <TouchableOpacity onPress={() => navigation.navigate('MyPage')} style={{ marginRight: 10 }}>
-                <RNText style={{ color: '#fff', fontWeight: 'bold' }}>마이</RNText>
-              </TouchableOpacity>
-            )
-          })} 
-        />
-        <Stack.Screen 
-          name="ConsumptionDetail" 
-          component={ConsumptionDetail} 
-          options={{ title: '소비 상세' }} 
-        />
-        <Stack.Screen 
-          name="SavingDetail" 
-          component={SavingDetail} 
-          options={{ title: '절약 내역' }} 
-        />
-        <Stack.Screen 
-          name="StupidExpenseDetail" 
-          component={StupidExpenseDetail} 
-          options={{ title: '멍청비용' }} 
-        />
-        <Stack.Screen 
-          name="MyPage" 
-          component={MyPageScreen} 
-          options={{ title: '마이 페이지' }} 
-        />
-      </Stack.Navigator>
-    </NavigationContainer>
+      />
+    </SafeAreaView>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#ffffff',
+  },
+  webview: {
+    flex: 1,
+  },
+});
